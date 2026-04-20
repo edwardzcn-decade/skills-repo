@@ -1,6 +1,7 @@
 ---
 name: project-overview
 description: Scan one or more project directories, read project-authored readable files, infer project purpose and future direction from repository evidence, and write canonical project memories into ~/.codex/memories using the user's naming conventions. Use this when the user requests project overview memory generation, repository/project summarization, or commands such as /project-overview <project_name> [other_project_names].
+disable-model-invocation: true
 ---
 
 # Project Overview
