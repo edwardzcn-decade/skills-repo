@@ -1,0 +1,4 @@
+interface:
+  display_name: "Host Status"
+  short_description: "Inspect host system and runtime load"
+  default_prompt: "Use $host-status to inspect the current host system and load."

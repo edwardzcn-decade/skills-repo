@@ -1,0 +1,4 @@
+interface:
+  display_name: "Project Overview"
+  short_description: "Scan projects and write memory files"
+  default_prompt: "Use $project-overview to scan one or more projects and write canonical memory files."

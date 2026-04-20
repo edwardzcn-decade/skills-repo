@@ -1,0 +1,5 @@
+.system/
+codex-primary-runtime/
+.DS_Store
+example.txt
+example.txt.sig
