@@ -1,6 +1,7 @@
 ---
 name: host-status
 description: Inspect the current host machine's operating system, uptime, CPU and memory pressure, disk usage, network summary, and high-load processes using simple local shell commands. Use when the user asks for host status, system overview, machine health, resource pressure, load, or a quick runtime diagnosis of the current Codex Desktop host.
+disable-model-invocation: false
 ---
 
 # Host Status

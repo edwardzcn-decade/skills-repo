@@ -1,0 +1,4 @@
+interface:
+  display_name: "kbg"
+  short_description: "Use Karpathy Behavioral Guidelines for vibe coding"
+  default_prompt: "Use $kbg to explicitly load Karpathy Behavioral Guidelines."
