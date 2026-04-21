@@ -1,0 +1,4 @@
+interface:
+  display_name: "Git Commit Assist"
+  short_description: "Draft commit messages and AI attribution"
+  default_prompt: "Use $git-commit-assist to prepare an Angular-style git commit message and collect AI participation metadata."
