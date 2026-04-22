@@ -1,6 +1,6 @@
 ---
 name: git-commit-assist
-description: Draft Angular-style git commit messages and complete git commit workflows with explicit AI participation metadata. Use when the user asks to create a commit, says "git commit", "commit this", "write a commit message", "will commit" in English or Chinese, or needs to choose AI attribution and Co-authored-by (coauthor) trailers for a commit.
+description: Draft Angular-style git commit messages and complete git commit workflows with explicit AI participation metadata. Use when the user asks to create a commit, says "git commit", "commit this", "write a commit message", "will commit", "help me commit" in English or Chinese, or needs to choose AI attribution and Co-authored-by (coauthor) trailers for a commit.
 ---
 
 # Git Commit Assist
@@ -8,6 +8,8 @@ description: Draft Angular-style git commit messages and complete git commit wor
 ## Overview
 
 Use this skill when a change is ready to commit and the user wants help drafting the message or finishing the commit. Read the relevant diff, draft the commit message with the model, then collect AI participation and co-author metadata through local scripts to avoid unnecessary token use.
+
+This skill uses `AskUserQuestion` to collect selections from the user, then passes the answer to the selector scripts via `--choice`. This works in all agent runtimes without requiring a live TTY.
 
 ## Fixed AI Participation Levels
 
@@ -28,10 +30,11 @@ Do not ask the user to rename, reinterpret, or free-form these levels. Use the l
 4. Pick the `type` from the actual change. Prefer `feat`, `fix`, `refactor`, `docs`, `test`, `build`, `ci`, `perf`, `style`, or `chore`.
 5. Keep the subject brief, imperative, and without a trailing period.
 6. Add a body only when it improves clarity. Keep every body line to 20 words or fewer.
-7. Run `bash scripts/select_ai_participation.sh` in a local shell and read its machine-readable output.
-8. If the selected participation level is not `Human-Only`, run `bash scripts/select_coauthors.sh` in a local shell.
-9. Append trailers after one blank line. Use exactly `Co-authored-by: Name <email>`.
-10. If the user explicitly asked to complete the commit, show the final message briefly and run `git commit` with that message. Otherwise stop after presenting the message.
+7. Use `AskUserQuestion` to present the participation menu (run `bash scripts/select_ai_participation.sh --menu` to get the text), collect the user's choice (1-4), then run `bash scripts/select_ai_participation.sh --choice <n>` to get machine-readable output.
+8. If `needs_coauthor=1`, use `AskUserQuestion` to present the co-author menu (run `bash scripts/select_coauthors.sh --menu` to get the text), collect the user's comma-separated choices, then run `bash scripts/select_coauthors.sh --choice <csv>` to get machine-readable output.
+9. Finalize the commit message only after both selectors finish.
+10. Append trailers after one blank line. Put `AI-Participation: <label>` above any `Co-authored-by:` lines.
+11. If the user explicitly asked to complete the commit, show the final message briefly and run `git commit` with that message. Otherwise stop after presenting the message.
 
 ## Commit Message Rules
 
@@ -40,6 +43,7 @@ Do not ask the user to rename, reinterpret, or free-form these levels. Use the l
 - Prefer no body over filler text.
 - Keep each body line under or equal to 20 words.
 - Separate trailers from the body with a single blank line.
+- Always add exactly one `AI-Participation: <label>` trailer using the label returned by the selector script.
 - Use one `Co-authored-by:` line per selected partner.
 
 Example structure:
@@ -50,6 +54,7 @@ feat(parser): support nested config overrides
 Handle nested keys during merge.
 Preserve explicit null removals.
 
+AI-Participation: Human-Led
 Co-authored-by: OpenAI Codex <codex@openai.com>
 Co-authored-by: Claude Sonnet <claude@anthropic.com>
 ```
@@ -58,7 +63,11 @@ Co-authored-by: Claude Sonnet <claude@anthropic.com>
 
 ### scripts/select_ai_participation.sh
 
-Run this script locally instead of asking the user in chat. It presents the fixed four-level menu and prints machine-readable lines:
+Modes:
+
+- `--menu` — print the numbered menu text (use to populate `AskUserQuestion`)
+- `--choice <1-4>` — validate choice and print machine-readable lines (primary agent path)
+- `--interactive` — full TTY prompt loop (for direct terminal use only)
 
 ```text
 ai_participation_code=human-led
@@ -71,7 +80,13 @@ Treat `needs_coauthor=0` as a hard stop for co-author selection.
 
 ### scripts/select_coauthors.sh
 
-Run this script only when `needs_coauthor=1`. It presents local menu choices and prints one line per selected partner:
+Run only when `needs_coauthor=1`. Modes:
+
+- `--menu` — print the numbered menu text (use to populate `AskUserQuestion`)
+- `--choice <csv>` — validate choices and print machine-readable lines (primary agent path)
+- `--interactive` — full TTY prompt loop (for direct terminal use only)
+
+It prints one line per selected partner:
 
 ```text
 coauthored_by=OpenAI Codex <codex@openai.com>
@@ -86,11 +101,12 @@ Supported built-in partners:
 - `Gemini <gemini@google.com>`
 - `Custom...`
 
-When `Custom...` is selected, require the user to enter `Name <email>` and preserve the exact value if it is valid.
+When `Custom...` is selected, require the user to enter `Name <email>` inside the script prompt and preserve the exact value if it is valid.
 
 ## Notes
 
 - Do not emit `Co-authored-by:` trailers for `Human-Only`.
+- Always emit the `AI-Participation:` trailer, even for `Human-Only`.
 - Do not invent co-authors that the local script did not return.
 - If the user wants only a draft, stop before `git commit`.
 - If the user wants the commit executed, make sure the final message includes the trailers before committing.
